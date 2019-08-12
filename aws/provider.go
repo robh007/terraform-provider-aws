@@ -250,6 +250,7 @@ func Provider() terraform.ResourceProvider {
 			"aws_route_tables":                              dataSourceAwsRouteTables(),
 			"aws_route53_delegation_set":                    dataSourceAwsDelegationSet(),
 			"aws_route53_zone":                              dataSourceAwsRoute53Zone(),
+			"aws_route53_resolver_endpoint":                 dataSourceAwsRoute53ResolverEndpoint(),
 			"aws_s3_bucket":                                 dataSourceAwsS3Bucket(),
 			"aws_s3_bucket_object":                          dataSourceAwsS3BucketObject(),
 			"aws_s3_bucket_objects":                         dataSourceAwsS3BucketObjects(),
