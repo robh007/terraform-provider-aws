@@ -2,7 +2,6 @@ package aws
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -49,13 +48,13 @@ func TestAccAWSSSMParameter_basic(t *testing.T) {
 				Config: testAccAWSSSMParameterBasicConfig(name, "String", "bar"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSSSMParameterExists("aws_ssm_parameter.foo", &param),
-					resource.TestMatchResourceAttr("aws_ssm_parameter.foo", "arn",
-						regexp.MustCompile(fmt.Sprintf("^arn:aws:ssm:[a-z0-9-]+:[0-9]{12}:parameter/%s$", name))),
+					testAccCheckResourceAttrRegionalARN("aws_ssm_parameter.foo", "arn", "ssm", fmt.Sprintf("parameter/%s", name)),
 					resource.TestCheckResourceAttr("aws_ssm_parameter.foo", "value", "bar"),
 					resource.TestCheckResourceAttr("aws_ssm_parameter.foo", "type", "String"),
 					resource.TestCheckResourceAttr("aws_ssm_parameter.foo", "tier", "Standard"),
 					resource.TestCheckResourceAttr("aws_ssm_parameter.foo", "tags.%", "1"),
 					resource.TestCheckResourceAttr("aws_ssm_parameter.foo", "tags.Name", "My Parameter"),
+					resource.TestCheckResourceAttrSet("aws_ssm_parameter.foo", "version"),
 				),
 			},
 		},
@@ -230,8 +229,7 @@ func TestAccAWSSSMParameter_fullPath(t *testing.T) {
 				Config: testAccAWSSSMParameterBasicConfig(name, "String", "bar"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSSSMParameterExists("aws_ssm_parameter.foo", &param),
-					resource.TestMatchResourceAttr("aws_ssm_parameter.foo", "arn",
-						regexp.MustCompile(fmt.Sprintf("^arn:aws:ssm:[a-z0-9-]+:[0-9]{12}:parameter%s$", name))),
+					testAccCheckResourceAttrRegionalARN("aws_ssm_parameter.foo", "arn", "ssm", fmt.Sprintf("parameter%s", name)),
 					resource.TestCheckResourceAttr("aws_ssm_parameter.foo", "value", "bar"),
 					resource.TestCheckResourceAttr("aws_ssm_parameter.foo", "type", "String"),
 				),
@@ -408,7 +406,8 @@ resource "aws_ssm_parameter" "foo" {
   name  = "%s"
   type  = "%s"
   value = "%s"
-  tags  = {
+
+  tags = {
     Name = "My Parameter"
   }
 }
@@ -432,8 +431,9 @@ resource "aws_ssm_parameter" "foo" {
   name  = "%s"
   type  = "%s"
   value = "%s"
+
   tags = {
-    Name = "My Parameter Updated"
+    Name       = "My Parameter Updated"
     AnotherTag = "AnotherTagValue"
   }
 }
@@ -443,11 +443,11 @@ resource "aws_ssm_parameter" "foo" {
 func testAccAWSSSMParameterBasicConfigOverwrite(rName, pType, value string) string {
 	return fmt.Sprintf(`
 resource "aws_ssm_parameter" "foo" {
-  name  = "test_parameter-%[1]s"
-  description  = "description for parameter %[1]s"
-  type  = "%[2]s"
-  value = "%[3]s"
-  overwrite = true
+  name        = "test_parameter-%[1]s"
+  description = "description for parameter %[1]s"
+  type        = "%[2]s"
+  value       = "%[3]s"
+  overwrite   = true
 }
 `, rName, pType, value)
 }
@@ -455,9 +455,9 @@ resource "aws_ssm_parameter" "foo" {
 func testAccAWSSSMParameterBasicConfigOverwriteWithoutDescription(rName, pType, value string) string {
 	return fmt.Sprintf(`
 resource "aws_ssm_parameter" "foo" {
-  name  = "test_parameter-%[1]s"
-  type  = "%[2]s"
-  value = "%[3]s"
+  name      = "test_parameter-%[1]s"
+  type      = "%[2]s"
+  value     = "%[3]s"
   overwrite = true
 }
 `, rName, pType, value)
@@ -466,10 +466,10 @@ resource "aws_ssm_parameter" "foo" {
 func testAccAWSSSMParameterSecureConfig(rName string, value string) string {
 	return fmt.Sprintf(`
 resource "aws_ssm_parameter" "secret_foo" {
-  name  = "test_secure_parameter-%[1]s"
-  description  = "description for parameter %[1]s"
-  type  = "SecureString"
-  value = "%[2]s"
+  name        = "test_secure_parameter-%[1]s"
+  description = "description for parameter %[1]s"
+  type        = "SecureString"
+  value       = "%[2]s"
 }
 `, rName, value)
 }
@@ -477,12 +477,12 @@ resource "aws_ssm_parameter" "secret_foo" {
 func testAccAWSSSMParameterSecureConfigWithKey(rName string, value string, keyAlias string) string {
 	return fmt.Sprintf(`
 resource "aws_ssm_parameter" "secret_foo" {
-  name  = "test_secure_parameter-%[1]s"
-  description  = "description for parameter %[1]s"
-  type  = "SecureString"
-  value = "%[2]s"
-  key_id = "alias/%[3]s"
-  depends_on = ["aws_kms_alias.test_alias"]
+  name        = "test_secure_parameter-%[1]s"
+  description = "description for parameter %[1]s"
+  type        = "SecureString"
+  value       = "%[2]s"
+  key_id      = "alias/%[3]s"
+  depends_on  = ["aws_kms_alias.test_alias"]
 }
 
 resource "aws_kms_key" "test_key" {
